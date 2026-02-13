@@ -87,8 +87,7 @@ button{
   <select id="mode">
     <option value="z50">Nikon Z50</option>
     <option value="dispo">Dispo 500SF</option>
-    <option value="flash2000">2000s Flash Party</option>
-    <option value="vhs">VHS Camcorder</option>
+    <option value="lens55">55mm Portrait</option>
   </select>
   <button onclick="switchCamera()">Switch Cam</button>
   <br>
@@ -151,8 +150,8 @@ ctx.drawImage(video,0,0);
 
 if(mode.value==="z50") processZ50();
 if(mode.value==="dispo") processDispo();
-  if(mode.value==="flash2000") processFlash2000();
-  if(mode.value==="vhs") processVHS();
+  if(mode.value==="lens55") processLens55();
+
 }
 
 function processZ50(){
@@ -200,189 +199,6 @@ d[i]=clamp(r);
 d[i+1]=clamp(g);
 d[i+2]=clamp(b);
 }
-function processFlash2000(){
-  let img = ctx.getImageData(0,0,canvas.width,canvas.height);
-  let d = img.data;
-
-  for(let i=0;i<d.length;i+=4){
-
-    let r=d[i];
-    let g=d[i+1];
-    let b=d[i+2];
-
-    // Strong flash exposure
-    r+=45;
-    g+=35;
-    b+=30;
-
-    // Slight green indoor tint
-    g+=10;
-    b-=5;
-
-    // Highlight clipping (cheap sensor look)
-    if(r>230) r=255;
-    if(g>230) g=255;
-    if(b>230) b=255;
-
-    d[i]=clamp(r);
-    d[i+1]=clamp(g);
-    d[i+2]=clamp(b);
-  }
-
-  ctx.putImageData(img,0,0);
-
-  addFlashCenter();
-  addHeavyGrain();
-  addHardShadow();
-}
-ctx.putImageData(img,0,0);
-addFlashBloom();
-addGrain(iso*0.0008);
-addTimestamp();
-addBlur();
-}
-function addFlashCenter(){
-  const grad = ctx.createRadialGradient(
-    canvas.width/2,
-    canvas.height/2,
-    0,
-    canvas.width/2,
-    canvas.height/2,
-    canvas.width/1.2
-  );
-  grad.addColorStop(0,"rgba(255,255,255,0.5)");
-  grad.addColorStop(1,"rgba(255,255,255,0)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-}
-
-function addHeavyGrain(){
-  for(let i=0;i<canvas.width*canvas.height*0.002;i++){
-    const x=Math.random()*canvas.width;
-    const y=Math.random()*canvas.height;
-    ctx.fillStyle="rgba(0,0,0,0.08)";
-    ctx.fillRect(x,y,1,1);
-  }
-
-function addHardShadow(){
-  ctx.fillStyle="rgba(0,0,0,0.15)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-}
-function processVHSCamcorder(){
-  let img = ctx.getImageData(0,0,canvas.width,canvas.height);
-  let d = img.data;
-
-  for(let i=0;i<d.length;i+=4){
-
-    let r = d[i] / 255;
-    let g = d[i+1] / 255;
-    let b = d[i+2] / 255;
-
-    // 🎞 Film S-Curve (soft contrast)
-    r = r < 0.5 ? 2*r*r : 1 - Math.pow(-2*r + 2, 2)/2;
-    g = g < 0.5 ? 2*g*g : 1 - Math.pow(-2*g + 2, 2)/2;
-    b = b < 0.5 ? 2*b*b : 1 - Math.pow(-2*b + 2, 2)/2;
-
-    // 🌤 Highlight compression
-    if(r > 0.8) r = 0.8 + (r - 0.8) * 0.3;
-    if(g > 0.8) g = 0.8 + (g - 0.8) * 0.3;
-    if(b > 0.8) b = 0.8 + (b - 0.8) * 0.3;
-
-    // 🌈 Film color response (Kodak-ish warmth)
-    r *= 1.07;
-    g *= 1.03;
-    b *= 0.92;
-
-    // 🌑 Lift blacks
-    r += 0.04;
-    g += 0.04;
-    b += 0.04;
-
-    // 🌌 Slight shadow cool shift
-    if(r < 0.4){
-      b *= 1.05;
-    }
-
-    d[i]   = clamp(r * 255);
-    d[i+1] = clamp(g * 255);
-    d[i+2] = clamp(b * 255);
-  }
-
-  ctx.putImageData(img,0,0);
-
-  addAdvancedFilmGrain();
-  addLensVignette();
-  addHalation();
-  addDust();
-  addMicroSoftness();
-}
-}
-  function addAdvancedFilmGrain(){
-  const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
-  const d = imageData.data;
-
-  for(let i=0;i<d.length;i+=4){
-    let brightness = (d[i]+d[i+1]+d[i+2])/3;
-    let grainStrength = brightness > 180 ? 4 : 8;
-
-    let noise = (Math.random()-0.5)*grainStrength;
-
-    d[i] += noise;
-    d[i+1] += noise;
-    d[i+2] += noise;
-  }
-
-  ctx.putImageData(imageData,0,0);
-}
-  function addLensVignette(){
-  const grad = ctx.createRadialGradient(
-    canvas.width/2,
-    canvas.height/2,
-    canvas.width/4,
-    canvas.width/2,
-    canvas.height/2,
-    canvas.width
-  );
-
-  grad.addColorStop(0,"rgba(0,0,0,0)");
-  grad.addColorStop(0.7,"rgba(0,0,0,0.2)");
-  grad.addColorStop(1,"rgba(0,0,0,0.5)");
-
-  ctx.fillStyle = grad;
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-}
-function addHalation(){
-  ctx.globalAlpha = 0.05;
-  ctx.drawImage(canvas,0,0);
-  ctx.globalAlpha = 1;
-}
-function addDust(){
-  for(let i=0;i<20;i++){
-    const x=Math.random()*canvas.width;
-    const y=Math.random()*canvas.height;
-    const size=Math.random()*3;
-
-    ctx.fillStyle="rgba(255,255,255,0.15)";
-    ctx.beginPath();
-    ctx.arc(x,y,size,0,Math.PI*2);
-    ctx.fill();
-  }
-
-  for(let i=0;i<3;i++){
-    ctx.strokeStyle="rgba(255,255,255,0.1)";
-    ctx.beginPath();
-    ctx.moveTo(Math.random()*canvas.width,0);
-    ctx.lineTo(Math.random()*canvas.width,canvas.height);
-    ctx.stroke();
-  }
-}
-  function addMicroSoftness(){
-  ctx.globalAlpha = 0.06;
-  ctx.drawImage(canvas,1,1);
-  ctx.globalAlpha = 1;
-}
-
-
 function addVignette(strength){
 const grad=ctx.createRadialGradient(
 canvas.width/2,canvas.height/2,canvas.width/4,
@@ -432,7 +248,58 @@ ctx.font="40px Courier";
 ctx.fillStyle="rgba(255,120,80,0.8)";
 ctx.fillText(text,40,canvas.height-40);
 }
+  function processLens55(){
 
+  // Draw original image first
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
+  // Create depth blur mask
+  let centerX = canvas.width / 2;
+  let centerY = canvas.height / 2;
+  let radius = Math.min(canvas.width, canvas.height) / 2;
+
+  // Soft vignette + edge blur
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.filter = "blur(6px)";
+  ctx.drawImage(canvas,0,0);
+  ctx.restore();
+
+  // Sharpen center (fake micro-contrast)
+  ctx.save();
+  ctx.globalCompositeOperation = "overlay";
+  ctx.fillStyle = "rgba(255,255,255,0.05)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.restore();
+
+  // Natural lens vignette
+  const grad = ctx.createRadialGradient(
+    centerX,
+    centerY,
+    radius * 0.4,
+    centerX,
+    centerY,
+    radius
+  );
+
+  grad.addColorStop(0,"rgba(0,0,0,0)");
+  grad.addColorStop(1,"rgba(0,0,0,0.4)");
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Slight warmth like portrait lens
+  let img = ctx.getImageData(0,0,canvas.width,canvas.height);
+  let d = img.data;
+
+  for(let i=0;i<d.length;i+=4){
+    d[i] *= 1.04;     // red
+    d[i+1] *= 1.02;   // green
+    d[i+2] *= 0.97;   // blue
+  }
+
+  ctx.putImageData(img,0,0);
+}
 function downloadImage(){
 const link=document.createElement("a");
 link.download="rijcam-ultimate.png";
