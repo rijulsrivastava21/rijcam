@@ -199,56 +199,14 @@ d[i]=clamp(r);
 d[i+1]=clamp(g);
 d[i+2]=clamp(b);
 }
-function addVignette(strength){
-const grad=ctx.createRadialGradient(
-canvas.width/2,canvas.height/2,canvas.width/4,
-canvas.width/2,canvas.height/2,canvas.width
-);
-grad.addColorStop(0,"rgba(0,0,0,0)");
-grad.addColorStop(1,`rgba(0,0,0,${strength})`);
-ctx.fillStyle=grad;
-ctx.fillRect(0,0,canvas.width,canvas.height);
-}
 
-function addFlashBloom(){
-const grad=ctx.createRadialGradient(
-canvas.width/2,canvas.height/2,0,
-canvas.width/2,canvas.height/2,canvas.width/1.5
-);
-grad.addColorStop(0,"rgba(255,255,255,0.4)");
-grad.addColorStop(1,"rgba(255,255,255,0)");
-ctx.fillStyle=grad;
-ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.putImageData(img,0,0);
+addFlashBloom();
+addGrain(iso*0.0008);
+addTimestamp();
+addBlur();
 }
-
-function addGrain(amount){
-for(let i=0;i<canvas.width*canvas.height*amount;i++){
-const x=Math.random()*canvas.width;
-const y=Math.random()*canvas.height;
-ctx.fillStyle="rgba(0,0,0,0.05)";
-ctx.fillRect(x,y,1,1);
-}
-}
-
-function addBlur(){
-let blur=parseInt(blurSlider.value);
-if(blur>0){
-ctx.globalAlpha=0.08*blur;
-ctx.drawImage(canvas,blur,blur);
-ctx.globalAlpha=1;
-}
-}
-
-function addTimestamp(){
-const date=new Date();
-const text=
-date.getDate()+"/"+(date.getMonth()+1)+"/"+
-date.getFullYear().toString().slice(-2);
-ctx.font="40px Courier";
-ctx.fillStyle="rgba(255,120,80,0.8)";
-ctx.fillText(text,40,canvas.height-40);
-}
-  function processLens55(){
+function processLens55(){
 
   // Draw original image first
   ctx.drawImage(video,0,0,canvas.width,canvas.height);
@@ -300,6 +258,56 @@ ctx.fillText(text,40,canvas.height-40);
 
   ctx.putImageData(img,0,0);
 }
+function addVignette(strength){
+const grad=ctx.createRadialGradient(
+canvas.width/2,canvas.height/2,canvas.width/4,
+canvas.width/2,canvas.height/2,canvas.width
+);
+grad.addColorStop(0,"rgba(0,0,0,0)");
+grad.addColorStop(1,`rgba(0,0,0,${strength})`);
+ctx.fillStyle=grad;
+ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function addFlashBloom(){
+const grad=ctx.createRadialGradient(
+canvas.width/2,canvas.height/2,0,
+canvas.width/2,canvas.height/2,canvas.width/1.5
+);
+grad.addColorStop(0,"rgba(255,255,255,0.4)");
+grad.addColorStop(1,"rgba(255,255,255,0)");
+ctx.fillStyle=grad;
+ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function addGrain(amount){
+for(let i=0;i<canvas.width*canvas.height*amount;i++){
+const x=Math.random()*canvas.width;
+const y=Math.random()*canvas.height;
+ctx.fillStyle="rgba(0,0,0,0.05)";
+ctx.fillRect(x,y,1,1);
+}
+}
+
+function addBlur(){
+let blur=parseInt(blurSlider.value);
+if(blur>0){
+ctx.globalAlpha=0.08*blur;
+ctx.drawImage(canvas,blur,blur);
+ctx.globalAlpha=1;
+}
+}
+
+function addTimestamp(){
+const date=new Date();
+const text=
+date.getDate()+"/"+(date.getMonth()+1)+"/"+
+date.getFullYear().toString().slice(-2);
+ctx.font="40px Courier";
+ctx.fillStyle="rgba(255,120,80,0.8)";
+ctx.fillText(text,40,canvas.height-40);
+}
+
 function downloadImage(){
 const link=document.createElement("a");
 link.download="rijcam-ultimate.png";
@@ -321,4 +329,3 @@ document.body.appendChild(heart);
 
 </body>
 </html>
-
