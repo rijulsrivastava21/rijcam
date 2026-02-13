@@ -113,29 +113,9 @@ let facing="environment";
 let stream;
 
 function startCamera(){
-async function startCamera(){
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
-    });
-
-    video.srcObject = stream;
-    video.play();
-  } catch(err){
-    alert("Camera access denied or not supported.");
-    console.error(err);
-  }
-}.then(s=>{
-stream=s;
-video.srcObject=stream;
-}).catch(()=>alert("Camera permission required"));
-}
-
-startCamera();
+navigator.mediaDevices.getUserMedia({
+video:{facingMode:facing}
+})startCamera();
 
 function switchCamera(){
 if(stream) stream.getTracks().forEach(t=>t.stop());
