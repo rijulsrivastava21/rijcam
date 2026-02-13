@@ -88,6 +88,7 @@ button{
     <option value="z50">Nikon Z50</option>
     <option value="dispo">Dispo 500SF</option>
     <option value="flash2000">2000s Flash Party</option>
+    <option value="vhs">VHS Camcorder</option>
   </select>
   <button onclick="switchCamera()">Switch Cam</button>
   <br>
@@ -151,6 +152,7 @@ ctx.drawImage(video,0,0);
 if(mode.value==="z50") processZ50();
 if(mode.value==="dispo") processDispo();
   if(mode.value==="flash2000") processFlash2000();
+  if(mode.value==="vhs") processVHS();
 }
 
 function processZ50(){
@@ -266,6 +268,23 @@ function addHeavyGrain(){
 function addHardShadow(){
   ctx.fillStyle="rgba(0,0,0,0.15)";
   ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+function processVHS(){
+  let img = ctx.getImageData(0,0,canvas.width,canvas.height);
+  let d = img.data;
+
+  for(let i=0;i<d.length;i+=4){
+    d[i] *= 1.1;
+    d[i+1] *= 0.9;
+    d[i+2] *= 1.2;
+  }
+
+  ctx.putImageData(img,0,0);
+
+  ctx.fillStyle="rgba(255,0,0,0.05)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  addGrain(0.002);
 }
 function addVignette(strength){
 const grad=ctx.createRadialGradient(
