@@ -1,0 +1,277 @@
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RijCam Ultimate 💖</title>
+<style>
+body{
+  margin:0;
+  background:black;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+  overflow:hidden;
+}
+
+.container{
+  position:relative;
+  max-width:500px;
+  margin:auto;
+}
+
+video, canvas{
+  width:100%;
+  border-radius:20px;
+}
+canvas{ display:none; }
+
+#shutter{
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:white;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.1s;
+}
+
+#focusCircle{
+  position:absolute;
+  border:2px solid #fff;
+  border-radius:50%;
+  width:80px; height:80px;
+  display:none;
+  pointer-events:none;
+}
+
+.controls{
+  margin-top:10px;
+}
+
+button, select, input{
+  padding:8px;
+  margin:4px;
+  border:none;
+  border-radius:10px;
+}
+
+button{
+  background:white;
+  color:black;
+  font-weight:bold;
+}
+
+.heart{
+  position:absolute;
+  color:rgba(255,0,100,0.2);
+  animation:float 6s infinite;
+}
+
+@keyframes float{
+  0%{transform:translateY(100vh);}
+  100%{transform:translateY(-10vh);}
+}
+</style>
+</head>
+<body>
+
+<h2>RijCam Ultimate 💖</h2>
+
+<div class="container">
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
+  <div id="shutter"></div>
+  <div id="focusCircle"></div>
+</div>
+
+<div class="controls">
+  <select id="mode">
+    <option value="z50">Nikon Z50</option>
+    <option value="dispo">Dispo 500SF</option>
+  </select>
+  <button onclick="switchCamera()">Switch Cam</button>
+  <br>
+  Exposure <input type="range" id="exposure" min="-20" max="20" value="0">
+  ISO <input type="range" id="iso" min="100" max="800" value="100">
+  Blur <input type="range" id="blur" min="0" max="5" value="0">
+  <br>
+  <button onclick="takePhoto()">Capture 📸</button>
+  <button onclick="downloadImage()">Download</button>
+</div>
+
+<script>
+const video=document.getElementById("video");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const shutter=document.getElementById("shutter");
+const focusCircle=document.getElementById("focusCircle");
+const exposureSlider=document.getElementById("exposure");
+const isoSlider=document.getElementById("iso");
+const blurSlider=document.getElementById("blur");
+const mode=document.getElementById("mode");
+
+let facing="environment";
+let stream;
+
+function startCamera(){
+navigator.mediaDevices.getUserMedia({
+video:{facingMode:facing}
+}).then(s=>{
+stream=s;
+video.srcObject=stream;
+}).catch(()=>alert("Camera permission required"));
+}
+
+startCamera();
+
+function switchCamera(){
+if(stream) stream.getTracks().forEach(t=>t.stop());
+facing=facing==="environment"?"user":"environment";
+startCamera();
+}
+
+video.addEventListener("click",e=>{
+focusCircle.style.display="block";
+focusCircle.style.left=e.offsetX-40+"px";
+focusCircle.style.top=e.offsetY-40+"px";
+setTimeout(()=>focusCircle.style.display="none",600);
+});
+
+function clamp(v){ return Math.max(0,Math.min(255,v)); }
+
+function takePhoto(){
+shutter.style.opacity=1;
+setTimeout(()=>shutter.style.opacity=0,100);
+
+canvas.style.display="block";
+canvas.width=video.videoWidth;
+canvas.height=video.videoHeight;
+ctx.drawImage(video,0,0);
+
+if(mode.value==="z50") processZ50();
+if(mode.value==="dispo") processDispo();
+}
+
+function processZ50(){
+let img=ctx.getImageData(0,0,canvas.width,canvas.height);
+let d=img.data;
+let exp=parseInt(exposureSlider.value);
+let iso=parseInt(isoSlider.value);
+
+for(let i=0;i<d.length;i+=4){
+let r=d[i]/255;
+let g=d[i+1]/255;
+let b=d[i+2]/255;
+
+r=r<0.5?2*r*r:1-Math.pow(-2*r+2,2)/2;
+g=g<0.5?2*g*g:1-Math.pow(-2*g+2,2)/2;
+b=b<0.5?2*b*b:1-Math.pow(-2*b+2,2)/2;
+
+r=r*255+exp;
+g=g*255+exp;
+b=b*255+exp;
+
+d[i]=clamp(r*1.05);
+d[i+1]=clamp(g*1.02);
+d[i+2]=clamp(b*0.97);
+}
+
+ctx.putImageData(img,0,0);
+addVignette(0.15);
+addGrain(iso*0.0003);
+addBlur();
+}
+
+function processDispo(){
+let img=ctx.getImageData(0,0,canvas.width,canvas.height);
+let d=img.data;
+let exp=parseInt(exposureSlider.value);
+let iso=parseInt(isoSlider.value);
+
+for(let i=0;i<d.length;i+=4){
+let r=d[i]+30+exp;
+let g=d[i+1]+20+exp;
+let b=d[i+2]+25+exp;
+if(r>220) r=255;
+d[i]=clamp(r);
+d[i+1]=clamp(g);
+d[i+2]=clamp(b);
+}
+
+ctx.putImageData(img,0,0);
+addFlashBloom();
+addGrain(iso*0.0008);
+addTimestamp();
+addBlur();
+}
+
+function addVignette(strength){
+const grad=ctx.createRadialGradient(
+canvas.width/2,canvas.height/2,canvas.width/4,
+canvas.width/2,canvas.height/2,canvas.width
+);
+grad.addColorStop(0,"rgba(0,0,0,0)");
+grad.addColorStop(1,`rgba(0,0,0,${strength})`);
+ctx.fillStyle=grad;
+ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function addFlashBloom(){
+const grad=ctx.createRadialGradient(
+canvas.width/2,canvas.height/2,0,
+canvas.width/2,canvas.height/2,canvas.width/1.5
+);
+grad.addColorStop(0,"rgba(255,255,255,0.4)");
+grad.addColorStop(1,"rgba(255,255,255,0)");
+ctx.fillStyle=grad;
+ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function addGrain(amount){
+for(let i=0;i<canvas.width*canvas.height*amount;i++){
+const x=Math.random()*canvas.width;
+const y=Math.random()*canvas.height;
+ctx.fillStyle="rgba(0,0,0,0.05)";
+ctx.fillRect(x,y,1,1);
+}
+}
+
+function addBlur(){
+let blur=parseInt(blurSlider.value);
+if(blur>0){
+ctx.globalAlpha=0.08*blur;
+ctx.drawImage(canvas,blur,blur);
+ctx.globalAlpha=1;
+}
+}
+
+function addTimestamp(){
+const date=new Date();
+const text=
+date.getDate()+"/"+(date.getMonth()+1)+"/"+
+date.getFullYear().toString().slice(-2);
+ctx.font="40px Courier";
+ctx.fillStyle="rgba(255,120,80,0.8)";
+ctx.fillText(text,40,canvas.height-40);
+}
+
+function downloadImage(){
+const link=document.createElement("a");
+link.download="rijcam-ultimate.png";
+link.href=canvas.toDataURL();
+link.click();
+}
+
+// Floating hearts
+for(let i=0;i<6;i++){
+let heart=document.createElement("div");
+heart.className="heart";
+heart.innerHTML="❤";
+heart.style.left=Math.random()*100+"vw";
+heart.style.fontSize=(20+Math.random()*30)+"px";
+heart.style.animationDuration=(5+Math.random()*5)+"s";
+document.body.appendChild(heart);
+}
+</script>
+</body>
+</html>
