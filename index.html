@@ -1,4 +1,3 @@
-
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,6 +21,7 @@ video, canvas{
   width:100%;
   border-radius:20px;
 }
+
 canvas{ display:none; }
 
 #shutter{
@@ -115,7 +115,13 @@ let stream;
 function startCamera(){
 navigator.mediaDevices.getUserMedia({
 video:{facingMode:facing}
-})startCamera();
+}).then(s=>{
+stream=s;
+video.srcObject=stream;
+}).catch(()=>alert("Camera permission required"));
+}
+
+startCamera();
 
 function switchCamera(){
 if(stream) stream.getTracks().forEach(t=>t.stop());
@@ -266,5 +272,6 @@ heart.style.animationDuration=(5+Math.random()*5)+"s";
 document.body.appendChild(heart);
 }
 </script>
+
 </body>
 </html>
